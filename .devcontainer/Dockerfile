@@ -81,11 +81,18 @@ RUN sh -c "$(wget -O- https://github.com/deluan/zsh-in-docker/releases/download/
 # Install Claude
 RUN npm install -g @anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}
 
-
 # Copy and set up firewall script
 COPY init-firewall.sh /usr/local/bin/
 USER root
 RUN chmod +x /usr/local/bin/init-firewall.sh && \
   echo "node ALL=(root) NOPASSWD: /usr/local/bin/init-firewall.sh" > /etc/sudoers.d/node-firewall && \
   chmod 0440 /etc/sudoers.d/node-firewall
+
+# Git wrapper - MUST be last. Unsets VS Code's credential env vars and
+# forces store helper. Git checks GIT_ASKPASS before credential.helper,
+# so we must kill both.
+RUN mv /usr/bin/git /usr/bin/underlying-git && \
+    printf '#!/bin/sh\nunset GIT_ASKPASS\nunset VSCODE_GIT_ASKPASS_MAIN\nunset VSCODE_GIT_ASKPASS_NODE\nunset VSCODE_GIT_IPC_HANDLE\nexec /usr/bin/underlying-git -c credential.helper= -c credential.helper=store "$@"\n' > /usr/bin/git && \
+    chmod +x /usr/bin/git
+
 USER node

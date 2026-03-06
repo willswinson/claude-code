@@ -11,7 +11,8 @@
   },
   "runArgs": [
     "--cap-add=NET_ADMIN",
-    "--cap-add=NET_RAW"
+    "--cap-add=NET_RAW",
+    "--env-file=${localEnv:HOME}/.claude-sandbox.env"
   ],
   "customizations": {
     "vscode": {
@@ -52,6 +53,9 @@
   },
   "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=delegated",
   "workspaceFolder": "/workspace",
-  "postStartCommand": "sudo /usr/local/bin/init-firewall.sh",
+  "remoteEnv": {
+    "SSH_AUTH_SOCK": ""
+  },
+  "postStartCommand": "sudo /usr/local/bin/init-firewall.sh && printf 'https://x-token:%s@github.com\\n' \"$GITHUB_TOKEN\" > /home/node/.git-credentials",
   "waitFor": "postStartCommand"
 }
